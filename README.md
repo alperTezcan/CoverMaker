@@ -32,10 +32,16 @@ It is **not** a general video editor: it is optimized for recording yourself pla
 
 ## Linux setup (recommended for development)
 
-On Ubuntu/Debian-like systems:
+On Ubuntu/Debian-like systems, install FFmpeg, Python virtual-environment support, and the Qt XCB runtime dependency:
 
 ```bash
-sudo apt install ffmpeg python3-venv
+sudo apt update
+sudo apt install ffmpeg python3-venv libxcb-cursor0
+```
+
+Then create and activate the Python environment:
+
+```bash
 python3 -m venv .venv
 source .venv/bin/activate
 python -m pip install --upgrade pip
@@ -43,12 +49,76 @@ pip install -e .
 python -m covermaker
 ```
 
-Check FFmpeg first:
+Check that FFmpeg and FFprobe are available:
 
 ```bash
 ffmpeg -version
 ffprobe -version
 ```
+
+### Qt / XCB troubleshooting
+
+If CoverMaker fails at startup with an error similar to:
+
+```text
+qt.qpa.plugin: Could not load the Qt platform plugin "xcb"
+```
+
+first make sure the Qt XCB cursor runtime library is installed:
+
+```bash
+sudo apt install libxcb-cursor0
+```
+
+If the problem persists, install the commonly required XCB/XKB runtime dependencies:
+
+```bash
+sudo apt install \
+    libxcb-cursor0 \
+    libxcb-icccm4 \
+    libxcb-image0 \
+    libxcb-keysyms1 \
+    libxcb-render-util0 \
+    libxcb-xinerama0 \
+    libxcb-xkb1 \
+    libxkbcommon-x11-0
+```
+
+These are runtime packages; the corresponding `-dev` packages are not required just to run CoverMaker.
+
+For more detailed Qt plugin diagnostics, run:
+
+```bash
+QT_DEBUG_PLUGINS=1 python -m covermaker
+```
+
+You can also check which display session is currently in use:
+
+```bash
+echo $XDG_SESSION_TYPE
+```
+
+Typical outputs are:
+
+```text
+x11
+```
+
+or:
+
+```text
+wayland
+```
+
+On an X11 session, Qt normally uses the `xcb` platform plugin.
+
+On a Wayland session, you can test Qt's native Wayland backend with:
+
+```bash
+QT_QPA_PLATFORM=wayland python -m covermaker
+```
+
+This is mainly a diagnostic or alternative backend; fixing the missing XCB runtime dependencies is preferable if the `xcb` backend is otherwise expected to work.
 
 ## Windows
 
